@@ -27,8 +27,7 @@ def receive_message(client_socket):
 		message_length = int(message_header.decode("utf-8").strip())
 		return {"header":message_header, "data":client_socket.recv(message_length)}
 
-	except Exception as e:
-		print('Reading error: '.format(str(e)))
+	except:
 		return False
 
 
