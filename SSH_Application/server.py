@@ -1,5 +1,7 @@
 import socket
 import select
+import getpass
+import os
 import subprocess
 
 HEADER_LENGTH = 10
@@ -21,14 +23,21 @@ def execute_command(command):
 	result = ""
 	result = result.encode('utf-8')
 
-	if command:
+	if len(command):
 		l = command.split()
-		result = subprocess.run(l, stdout = subprocess.PIPE)
-		result = result.stdout
+		if l[0] == 'cd' and len(l) == 2:
+			try:
+				os.chdir(l[1])
+			except:
+				result = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE, stdin = subprocess.PIPE, stderr = subprocess.PIPE)
+				result = result.stdout.read() + result.stderr.read()
+		else:
+			result = subprocess.Popen(command, shell = True, stdout = subprocess.PIPE, stdin = subprocess.PIPE, stderr = subprocess.PIPE)
+			result = result.stdout.read() + result.stderr.read()
 
 	result_header = f"{len(result):<{HEADER_LENGTH}}".encode('utf-8')
 
-	curdir = "todo" #TODO
+	curdir = os.getcwd()
 	curdir = curdir.encode('utf-8')
 	curdir_header = f"{len(curdir):<{HEADER_LENGTH}}".encode('utf-8')
 
@@ -63,13 +72,15 @@ while True:
 
 			print(f"Accepted new connection from {client_address[0]}:{client_address[1]} username : {user['data'].decode('utf-8')}")
 
+			user = getpass.getuser().encode('utf-8')
+			user_header = f"{len(user):<{HEADER_LENGTH}}".encode('utf-8')
 
-			servername = "siddie" #TODO
-			servername = servername.encode('utf-8')
+			servername = os.uname()[1].split('.')
+			servername = (servername[0]+':').encode('utf-8')
 			servername_header = f"{len(servername):<{HEADER_LENGTH}}".encode('utf-8')
 
 			result = execute_command("")
-			client_socket.send(servername_header + servername + result) 
+			client_socket.send(user_header + user + servername_header + servername + result) 
 
 
 		else:
